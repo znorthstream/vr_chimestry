@@ -40,6 +40,21 @@ namespace ChemLab.EditorTools
                     "Сцена уже существует. Пересобрать заново? Все ручные правки сцены будут потеряны.", "Пересобрать", "Отмена"))
                 return;
 
+            BuildCore(interactive: true);
+        }
+
+        /// <summary>
+        /// Ядро сборки сцены без диалогов. interactive=false используется
+        /// CI-бутстрапом (ChemLabCiBootstrap) при headless-сборке APK.
+        /// </summary>
+        public static void BuildCore(bool interactive)
+        {
+            if (!AppearanceFactory.ShaderAvailable)
+            {
+                Debug.LogError($"[SceneBuilder] Шейдер \"{AppearanceFactory.UrpLitShader}\" не найден — установите URP (Setup → 0).");
+                return;
+            }
+
             Directory.CreateDirectory(PrefabDir);
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
 
@@ -55,7 +70,8 @@ namespace ChemLab.EditorTools
             AssetDatabase.SaveAssets();
 
             Debug.Log($"[SceneBuilder] Сцена собрана и сохранена: {ScenePath}. Она уже добавлена в Build Settings.");
-            EditorUtility.DisplayDialog("ChemLab", "Сцена LaboratoryScene собрана.\nДалее: ChemLab → Build → Build Android APK", "OK");
+            if (interactive)
+                EditorUtility.DisplayDialog("ChemLab", "Сцена LaboratoryScene собрана.\nДалее: ChemLab → Build → Build Android APK", "OK");
         }
 
         // ================= ОСВЕЩЕНИЕ =================

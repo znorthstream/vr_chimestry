@@ -17,6 +17,9 @@
 
 ## Быстрый старт (кратко)
 
+> **Нет Unity на ПК?** Соберите APK в облаке: `docs/BUILD_APK.md` → «Сборка в облаке
+> через GitHub Actions» (нужен только бесплатный аккаунт Unity и 5 минут на секреты).
+
 1. Установите **Unity 6 LTS (6000.3+)** с модулем **Android Build Support** (OpenJDK + Android SDK/NDK).
 2. Откройте проект в Unity. Дождитесь импорта пакетов.
 3. Меню **ChemLab → Setup → 0. Install/Update Packages** (если есть проблемы с пакетами).

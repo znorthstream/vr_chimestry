@@ -62,6 +62,15 @@ ChemLab/
 Порядок работы после `git clone` в свежем Unity: **Setup 0 (при проблемах) → Setup 1 →
 перезапуск → Setup 2 → Build**. Полностью — в `docs/BUILD_APK.md`.
 
+### CI-сборка APK (без Unity на ПК)
+
+`.github/workflows/build-apk.yml` собирает APK в GitHub Actions (GameCI `unity-builder@v4`).
+В batch-режиме `Assets/Editor/ChemLabCiBootstrap.cs` ([InitializeOnLoad]) сам применяет
+настройки (`ChemLabProjectSetup.ApplyCore()`) и генерирует сцену — поэтому в CI нет ручных шагов.
+Секреты Unity и пошаговая настройка — `docs/BUILD_APK.md` → «Сборка в облаке».
+Сгенерированные ассеты (сцена, URP-ассеты, префабы оборудования) — в `.gitignore`:
+источник правды всегда код в `Assets/Editor`.
+
 ---
 
 ## 3. Карта репозитория

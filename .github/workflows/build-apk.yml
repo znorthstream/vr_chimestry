@@ -1,0 +1,65 @@
+name: Build APK (Android / PICO 4 Ultra)
+
+# Собирает Builds/VirtualChemistryLab.apk в облаке.
+# Требует секретов Unity (настройка — см. docs/BUILD_APK.md, раздел «Сборка в облаке»):
+#   UNITY_LICENSE (содержимое Unity_lic.ulf) + UNITY_EMAIL + UNITY_PASSWORD
+#   (для Pro/Plus вместо UNITY_LICENSE: UNITY_SERIAL + UNITY_EMAIL + UNITY_PASSWORD)
+
+on:
+  workflow_dispatch:
+    inputs:
+      unityVersion:
+        description: 'Unity version ("auto" = из ProjectVersion.txt; укажите вручную, если образ GameCI для версии не найден)'
+        required: false
+        default: 'auto'
+  push:
+    branches: [ main ]
+    paths-ignore:
+      - 'docs/**'
+      - '**.md'
+
+concurrency:
+  group: build-apk-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  buildAndroid:
+    name: Build Android APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          lfs: false
+
+      - name: Cache Library (ускорение повторных сборок)
+        uses: actions/cache@v4
+        with:
+          path: Library
+          key: Library-Android-${{ hashFiles('Assets/**', 'Packages/**', 'ProjectSettings/**') }}
+          restore-keys: |
+            Library-Android-
+
+      - name: Build (Unity → APK)
+        uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+          UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
+        with:
+          targetPlatform: Android
+          unityVersion: ${{ github.event.inputs.unityVersion || 'auto' }}
+          projectPath: .
+          buildName: VirtualChemistryLab
+          buildsPath: build
+
+      - name: Upload APK (артефакт)
+        uses: actions/upload-artifact@v4
+        with:
+          name: VirtualChemistryLab-APK
+          path: build/Android/**/*.apk
+          if-no-files-found: error
+          retention-days: 30
