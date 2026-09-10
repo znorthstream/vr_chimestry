@@ -64,6 +64,12 @@ namespace ChemLab.Chemistry
             HideAll();
         }
 
+        void Start()
+        {
+            // Первичная отрисовка (например, у стакана уже есть вода из сцены)
+            Refresh();
+        }
+
         void OnEnable()
         {
             if (_container != null) _container.Changed += OnChanged;

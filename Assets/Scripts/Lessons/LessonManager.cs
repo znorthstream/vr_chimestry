@@ -285,6 +285,7 @@ namespace ChemLab.Lessons
             }
             if (best == null || CurrentLesson.accuracy == null) return 100f;
             var spec = CurrentLesson.accuracy;
+            if (spec.metric == "none") return 100f;
             float dev = Mathf.Abs(best.ComputePH() - spec.target) - spec.tolerance;
             if (dev <= 0f) return 100f;
             return Mathf.Clamp(100f - dev * spec.penaltyPerUnit, 0f, 100f);
