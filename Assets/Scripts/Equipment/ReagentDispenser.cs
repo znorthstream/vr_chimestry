@@ -38,6 +38,11 @@ namespace ChemLab.Equipment
         void Awake()
         {
             if (uiButton != null) uiButton.onClick.AddListener(Dispense);
+        }
+
+        void Start()
+        {
+            // В Start база веществ уже загружена (GameManager.Awake)
             RefreshLabel();
         }
 

@@ -324,7 +324,7 @@ namespace ChemLab.EditorTools
 
         // ---------- планшет ----------
 
-        public static GameObject BuildTablet(TabletUiRefs refs)
+        public static GameObject BuildTablet()
         {
             var root = new GameObject("Tablet");
             var dark = AppearanceFactory.Get("darkplastic");
@@ -344,7 +344,7 @@ namespace ChemLab.EditorTools
             var grab = root.AddComponent<XRGrabInteractable>();
             ConfigureGrab(grab);
 
-            BuildTabletUi(root.transform, refs);
+            BuildTabletUi(root.transform, ui);
             return root;
         }
 
@@ -378,14 +378,8 @@ namespace ChemLab.EditorTools
 
         // ---------- UI планшета ----------
 
-        public class TabletUiRefs
+        private static void BuildTabletUi(Transform parent, UI.TabletUI ui)
         {
-            public UI.TabletUI ui = new UI.TabletUI();
-        }
-
-        private static void BuildTabletUi(Transform parent, TabletUiRefs refs)
-        {
-            var ui = refs.ui;
             var canvas = UiFactory.CreateCanvas("Screen", parent, new Vector2(660, 470), 3000f);
             canvas.transform.localPosition = new Vector3(0, 0.0135f, 0);
             canvas.transform.localRotation = Quaternion.Euler(-90f, 0, 0);
@@ -486,10 +480,6 @@ namespace ChemLab.EditorTools
             rt.anchoredPosition = Vector2.zero;
             go.SetActive(false);
             return go;
-        }
-    }
-}
-      return go;
         }
     }
 }
