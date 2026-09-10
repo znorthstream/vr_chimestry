@@ -1,60 +1,78 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 using UnityEngine.XR.Management;
-#if UNITY_XR_OPENXR_AVAILABLE
 using UnityEngine.XR.OpenXR;
 using UnityEngine.XR.OpenXR.Features;
-#endif
 
 namespace ChemLab.EditorTools
 {
     /// <summary>
     /// Применяет настройки проекта под PICO 4 Ultra:
     /// Android/ARM64/IL2CPP, Linear color space, Input System, URP, OpenXR.
-    /// Всё, что не удалось сделать скриптом, логируется как ручной шаг
-    /// (см. docs/BUILD_APK.md — там те же шаги руками).
+    /// ApplyCore() выполняет всю работу без диалогов — используется и из меню,
+    /// и из CI-бутстрапа (ChemLabCiBootstrap) при сборке в GitHub Actions.
     /// </summary>
     public static class ChemLabProjectSetup
     {
-        private static readonly System.Collections.Generic.List<string> ManualSteps =
-            new System.Collections.Generic.List<string>();
+        private static List<string> _manualSteps = new List<string>();
 
         [MenuItem("ChemLab/Setup/1. Apply Project Settings (Android/ARM64/OpenXR/URP)", priority = 1)]
         public static void Apply()
         {
-            ManualSteps.Clear();
+            var manual = ApplyCore();
+            AssetDatabase.SaveAssets();
 
-            // 1. Платформа Android
-            if (EditorUserBuildSettings.activeBuildTarget != BuildTarget.Android)
+            var report = "[Setup] Готово. Автоматически: Android, ARM64+IL2CPP, Linear, Input System, URP, слои, OpenXR.";
+            if (manual.Count > 0)
             {
-                EditorUserBuildSettings.SwitchActiveBuildTarget(BuildTargetGroup.Android, BuildTarget.Android);
-                Debug.Log("[Setup] Build target переключён на Android (дождитесь импорта).");
+                report += "\n\nСДЕЛАЙТЕ ВРУЧНУЮ (см. docs/BUILD_APK.md):\n- " + string.Join("\n- ", manual);
+                Debug.LogWarning(report);
+                EditorUtility.DisplayDialog("ChemLab Setup",
+                    "Настройки применены.\n\nРучные шаги:\n" + string.Join("\n", manual), "OK");
             }
+            else
+            {
+                Debug.Log(report);
+                EditorUtility.DisplayDialog("ChemLab Setup", "Настройки применены полностью.\nДалее: ChemLab → Setup → 2. Build Laboratory Scene", "OK");
+            }
+        }
 
-            // 2. Идентификатор приложения
+        /// <summary>
+        /// Применить все настройки без единого диалога. Возвращает список шагов,
+        /// которые нужно сделать вручную (в CI — признак проблемы).
+        /// Вызывается и из меню, и из ChemLabCiBootstrap (batch-режим).
+        /// </summary>
+        public static List<string> ApplyCore()
+        {
+            _manualSteps = new List<string>();
+
+            // 1. Идентификатор приложения
             PlayerSettings.companyName = "VirtualChemLab";
             PlayerSettings.productName = "Virtual Chemistry Lab";
             PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Android, "com.virtuallab.chemistry");
 
-            // 3. Цветовое пространство (Linear) — нужно перезапустить редактор
+            // 2. Цветовое пространство Linear
             if (PlayerSettings.colorSpace != ColorSpace.Linear)
             {
                 PlayerSettings.colorSpace = ColorSpace.Linear;
-                Debug.LogWarning("[Setup] Color Space = Linear. ПЕРЕЗАПУСТИТЕ Unity, чтобы применить.");
-                ManualSteps.Add("Перезапустить Unity (сменилось цветовое пространство)");
+                if (!Application.isBatchMode)
+                    Debug.LogWarning("[Setup] Color Space = Linear. ПЕРЕЗАПУСТИТЕ Unity в редакторе, чтобы применить.");
+                else
+                    Debug.Log("[Setup] Color Space = Linear (batch: применится к сборке).");
             }
 
-            // 4. Скриптовый бэкенд и архитектура
+            // 3. Скриптовый бэкенд и архитектура
             PlayerSettings.SetScriptingBackend(NamedBuildTarget.Android, ScriptingBackend.IL2CPP);
             PlayerSettings.Android.targetArchitectures = AndroidArchitecture.Arm64;
             PlayerSettings.Android.minSdkVersion = AndroidSdkVersion.Android10;
             Debug.Log("[Setup] IL2CPP + ARM64 + minSdk 29 (Android 10).");
 
-            // 5. Active Input Handling = Input System (только новый ввод)
+            // 4. Active Input Handling = Input System (только новый ввод)
             try
             {
                 var settings = AssetDatabase.LoadAllAssetsAtPath("ProjectSettings/ProjectSettings.asset");
@@ -72,20 +90,20 @@ namespace ChemLab.EditorTools
             }
             catch (Exception e)
             {
-                ManualSteps.Add("Project Settings → Player → Active Input Handling → Input System Package (" + e.Message + ")");
+                _manualSteps.Add("Project Settings → Player → Active Input Handling → Input System Package (" + e.Message + ")");
             }
 
-            // 6. URP-ассет
+            // 5. URP-ассет
             try
             {
                 CreateAndAssignUrpAsset();
             }
             catch (Exception e)
             {
-                ManualSteps.Add("Создать URP Asset и назначить в Graphics (" + e.Message + ")");
+                _manualSteps.Add("Создать URP Asset и назначить в Graphics (" + e.Message + ")");
             }
 
-            // 7. Слои: LiquidZone (зоны жидкостей), Glassware/Probes (прозрачные стенки для инструментов)
+            // 6. Слои: LiquidZone (зоны жидкостей), Glassware/Probes (прозрачные стенки для инструментов)
             try
             {
                 AddLayer("LiquidZone");
@@ -95,30 +113,16 @@ namespace ChemLab.EditorTools
             }
             catch (Exception e)
             {
-                ManualSteps.Add("Добавить слои LiquidZone, Glassware, Probes в Tag Manager (" + e.Message + ")");
+                _manualSteps.Add("Добавить слои LiquidZone, Glassware, Probes в Tag Manager (" + e.Message + ")");
             }
 
-            // 8. XR Plug-in Management: OpenXR loader
+            // 7. XR Plug-in Management: OpenXR loader
             TrySetupXrManagement();
 
-            // 9. OpenXR: режим рендера и профили контроллеров
+            // 8. OpenXR: режим рендера и профили контроллеров
             TrySetupOpenXr();
 
-            AssetDatabase.SaveAssets();
-
-            var report = "[Setup] Готово. Автоматически: Android, ARM64+IL2CPP, Linear, Input System, URP, слой LiquidZone.";
-            if (ManualSteps.Count > 0)
-            {
-                report += "\n\nСДЕЛАЙТЕ ВРУЧНУЮ (см. docs/BUILD_APK.md):\n- " + string.Join("\n- ", ManualSteps);
-                Debug.LogWarning(report);
-                EditorUtility.DisplayDialog("ChemLab Setup",
-                    "Настройки применены.\n\nРучные шаги:\n" + string.Join("\n", ManualSteps), "OK");
-            }
-            else
-            {
-                Debug.Log(report);
-                EditorUtility.DisplayDialog("ChemLab Setup", "Настройки применены полностью.\nДалее: ChemLab → Setup → 2. Build Laboratory Scene", "OK");
-            }
+            return _manualSteps;
         }
 
         private static void CreateAndAssignUrpAsset()
@@ -174,7 +178,7 @@ namespace ChemLab.EditorTools
                 var general = XRGeneralSettings.Instance;
                 if (general == null || general.Manager == null)
                 {
-                    ManualSteps.Add("Project Settings → XR Plug-in Management → Android → инициализировать и включить OpenXR");
+                    _manualSteps.Add("Project Settings → XR Plug-in Management → Android → инициализировать и включить OpenXR");
                     return;
                 }
                 var manager = general.Manager;
@@ -183,7 +187,7 @@ namespace ChemLab.EditorTools
                     .FirstOrDefault(t => t != null);
                 if (openXrType == null)
                 {
-                    ManualSteps.Add("Установить пакет OpenXR и включить его в XR Plug-in Management");
+                    _manualSteps.Add("Установить пакет OpenXR и включить его в XR Plug-in Management");
                     return;
                 }
                 bool has = manager.loaders != null && manager.loaders.Any(l => l != null && l.GetType() == openXrType);
@@ -192,7 +196,7 @@ namespace ChemLab.EditorTools
             }
             catch (Exception e)
             {
-                ManualSteps.Add("XR Plug-in Management → Android → включить OpenXR (" + e.Message + ")");
+                _manualSteps.Add("XR Plug-in Management → Android → включить OpenXR (" + e.Message + ")");
             }
         }
 
@@ -203,14 +207,14 @@ namespace ChemLab.EditorTools
                 var oxr = OpenXRSettings.ActiveBuildTargetInstance;
                 if (oxr == null)
                 {
-                    ManualSteps.Add("Project Settings → XR Plug-in Management → OpenXR (включить для Android)");
+                    _manualSteps.Add("Project Settings → XR Plug-in Management → OpenXR (включить для Android)");
                     return;
                 }
                 oxr.renderMode = OpenXRSettings.RenderMode.SinglePassInstanced;
                 oxr.depthSubmissionMode = OpenXRSettings.DepthSubmissionMode.Depth16Bit;
                 Debug.Log("[Setup] OpenXR: Single Pass Instanced, Depth 16 bit.");
 
-                // Профиль контроллеров
+                // Профили контроллеров
                 int added = 0;
 
                 // 1) PICO-профили (если установлен PICO Unity Integration SDK)
@@ -251,11 +255,8 @@ namespace ChemLab.EditorTools
             }
             catch (Exception e)
             {
-                ManualSteps.Add("Project Settings → XR Plug-in Management → OpenXR → Render Mode = Single Pass Instanced, включить профиль контроллеров (" + e.Message + ")");
+                _manualSteps.Add("Project Settings → XR Plug-in Management → OpenXR → Render Mode = Single Pass Instanced, включить профиль контроллеров (" + e.Message + ")");
             }
-#else
-            ManualSteps.Add("Установить пакет OpenXR, затем снова запустить Setup");
-#endif
         }
     }
 }

@@ -1,0 +1,27 @@
+name: Acquire Unity Activation File (одноразово)
+
+# Помогает получить лицензионный файл для CI БЕЗ установки Unity Hub:
+# 1) запустите этот воркфлоу (Actions → Run workflow)
+# 2) скачайте артефакт "Unity_ActivationFile" (.alf)
+# 3) загрузите .alf на https://license.unity3d.com/manual (войдите под бесплатным
+#    аккаунтом Unity, выберите Personal) — скачается файл Unity_vXXX.ulf
+# 4) содержимое .ulf сохраните как секрет UNITY_LICENSE
+# Подробности: docs/BUILD_APK.md → «Сборка в облаке»
+
+on:
+  workflow_dispatch:
+
+jobs:
+  requestActivation:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Request manual activation file
+        id: getManualLicenseFile
+        uses: game-ci/unity-request-activation-file@v2
+
+      - name: Expose license file as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Unity_ActivationFile
+          path: ${{ steps.getManualLicenseFile.outputs.filePath }}
+          retention-days: 14

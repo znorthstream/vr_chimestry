@@ -52,3 +52,15 @@ crashlytics-build.properties
 
 # Package Manager lock file is generated on first resolve
 Packages/packages-lock.json
+
+# ============================================
+# Генерируется ChemLab-тулингом (источник — код):
+# сцена/URP/префабы пересоздаются Setup-меню или CI-бутстрапом
+/Assets/Scenes/LaboratoryScene.unity
+/Assets/Scenes/LaboratoryScene.unity.meta
+/Assets/Prefabs/Equipment/
+/Assets/Prefabs/Equipment.meta
+/Assets/Settings/ChemLab_URP.asset
+/Assets/Settings/ChemLab_URP.asset.meta
+/Assets/Settings/ChemLab_Renderer.asset
+/Assets/Settings/ChemLab_Renderer.asset.meta

@@ -5,6 +5,48 @@
 
 ---
 
+## ⚡ Сборка в облаке через GitHub Actions (Unity на ПК не нужен)
+
+В репозитории уже есть воркфлоу: `.github/workflows/build-apk.yml` и
+`.github/workflows/acquire-unity-license.yml`. CI сам ставит Unity, применяет все
+настройки (headless-бутстрап `Assets/Editor/ChemLabCiBootstrap.cs`), генерирует сцену
+и собирает APK.
+
+### Шаг 1. Лицензионный файл (5 минут, один раз)
+
+1. Заведите бесплатный аккаунт Unity: https://id.unity.com (Personal-лицензия бесплатна).
+2. GitHub репозитория → **Actions** → слева **«Acquire Unity Activation File»** → **Run workflow**.
+3. Через ~1 минуту скачайте артефакт **Unity_ActivationFile** (файл `.alf`).
+4. Откройте https://license.unity3d.com/manual , войдите, загрузите `.alf`,
+   выберите **Personal license** → вам отдадут файл `Unity_vXXXX.ulf`.
+
+### Шаг 2. Секреты (один раз)
+
+GitHub → **Settings → Secrets and variables → Actions → New repository secret**:
+
+| Секрет | Значение |
+|---|---|
+| `UNITY_LICENSE` | **полное содержимое** файла `Unity_vXXXX.ulf` |
+| `UNITY_EMAIL` | email вашего аккаунта Unity |
+| `UNITY_PASSWORD` | пароль аккаунта (лучше без спецсимволов — рекомендация GameCI) |
+
+> Владельцам Pro/Plus: вместо `UNITY_LICENSE` добавьте `UNITY_SERIAL`.
+
+### Шаг 3. Сборка
+
+**Actions → «Build APK (Android / PICO 4 Ultra)» → Run workflow → Run.**
+Через ~15–30 минут в завершившемся запуске скачайте артефакт
+**VirtualChemistryLab-APK** — внутри `VirtualChemistryLab.apk` (debug-подпись,
+ставится на шлем без танцев). Каждый push в `main`/`arena/**` пересобирает APK.
+
+> Если job упал с ошибкой про «image not found» — запустите снова, указав вручную
+> вход `unityVersion` (например `6000.0.50f1`): образ GameCI для вашей версии Unity
+> мог ещё не выйти.
+
+Установка APK на шлем — раздел 8 ниже. Локальная сборка — разделы 2–7 ниже.
+
+---
+
 ## 1. Что понадобится
 
 | Что | Где взять |
