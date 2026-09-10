@@ -1,0 +1,68 @@
+{
+    "reactions": [
+        {
+            "id": "dissolution_nacl",
+            "name": "Растворение соли",
+            "explanation": "NaCl хорошо растворим в воде (36 г / 100 мл). Молекулы воды окружают ионы Na⁺ и Cl⁻ и отрывают их от кристалла. Внешне раствор почти прозрачен, но соль больше нельзя отделить фильтрованием.",
+            "reactants": [
+                { "substance": "nacl_solid", "ratio": 1.0 },
+                { "substance": "water", "ratio": 1.0 }
+            ],
+            "products": [
+                { "substance": "nacl_aq", "ratio": 1.0 },
+                { "substance": "water", "ratio": 1.0 }
+            ],
+            "heatPerUnitMl": 0.01,
+            "hazardNote": "",
+            "requiresFumeHood": false
+        },
+        {
+            "id": "neutralization_hcl_naoh",
+            "name": "Нейтрализация: HCl + NaOH",
+            "explanation": "HCl + NaOH → NaCl + H₂O. Ионы H⁺ (из кислоты) и OH⁻ (из щёлочи) соединяются в молекулы воды. Кислотные и щелочные свойства взаимно уничтожаются, pH стремится к 7. Реакция экзотермическая — раствор нагревается.",
+            "reactants": [
+                { "substance": "hcl_1m", "ratio": 1.0 },
+                { "substance": "naoh_1m", "ratio": 1.0 }
+            ],
+            "products": [
+                { "substance": "nacl_aq", "ratio": 1.0 },
+                { "substance": "water", "ratio": 1.0 }
+            ],
+            "heatPerUnitMl": 0.13,
+            "hazardNote": "",
+            "requiresFumeHood": false
+        },
+        {
+            "id": "precipitation_cuoh2",
+            "name": "Осаждение: CuSO₄ + NaOH",
+            "explanation": "CuSO₄ + 2NaOH → Cu(OH)₂↓ + Na₂SO₄. Ионы Cu²⁺ соединяются с гидроксид-ионами OH⁻ в нерастворимый гидроксид меди(II) — голубой осадок выпадает на дно. Это качественная реакция на ионы меди.",
+            "reactants": [
+                { "substance": "cuso4_solution", "ratio": 1.0 },
+                { "substance": "naoh_1m", "ratio": 1.0 }
+            ],
+            "products": [
+                { "substance": "cuoh2_solid", "ratio": 1.0, "precipitate": true },
+                { "substance": "na2so4_aq", "ratio": 1.0 }
+            ],
+            "heatPerUnitMl": 0.05,
+            "hazardNote": "",
+            "requiresFumeHood": false
+        },
+        {
+            "id": "acid_dissolves_copper_hydroxide",
+            "name": "Растворение осадка кислотой",
+            "explanation": "Cu(OH)₂ + HCl → CuCl₂ + H₂O. Осадок гидроксида реагирует с кислотой и растворяется — снова появляется голубой раствор соли меди. Осадки гидроксидов растворимы в кислотах.",
+            "reactants": [
+                { "substance": "cuoh2_solid", "ratio": 1.0 },
+                { "substance": "hcl_1m", "ratio": 1.0 }
+            ],
+            "products": [
+                { "substance": "cuso4_solution", "ratio": 1.0 },
+                { "substance": "water", "ratio": 1.0 }
+            ],
+            "heatPerUnitMl": 0.04,
+            "hazardNote": "",
+            "requiresFumeHood": false
+        }
+    ]
+}

@@ -38,19 +38,33 @@ namespace ChemLab.Core
         {
             Instance = this;
 
-            if (database == null) database = FindObjectOfType<ChemistryDatabase>();
+            SetupPhysicsLayers();
+
+            if (database == null) database = FindFirstObjectByType<ChemistryDatabase>();
             ChemistryDatabaseHolder.Instance = database;
             if (database != null) database.LoadAll();
 
-            if (safety == null) safety = FindObjectOfType<SafetySystem>();
-            if (journal == null) journal = FindObjectOfType<LabJournal>();
-            if (save == null) save = FindObjectOfType<SaveManager>();
-            if (lessons == null) lessons = FindObjectOfType<LessonManager>();
-            if (tablet == null) tablet = FindObjectOfType<TabletUI>();
+            if (safety == null) safety = FindFirstObjectByType<SafetySystem>();
+            if (journal == null) journal = FindFirstObjectByType<LabJournal>();
+            if (save == null) save = FindFirstObjectByType<SaveManager>();
+            if (lessons == null) lessons = FindFirstObjectByType<LessonManager>();
+            if (tablet == null) tablet = FindFirstObjectByType<TabletUI>();
 
             safety?.Init(journal);
             lessons?.Init(this);
             tablet?.Init(this);
+        }
+
+        /// <summary>
+        /// Инструменты (пипетка, термометр, электрод) не сталкиваются со стеклянной посудой —
+        /// иначе кончик физически не может войти в сосуд. Стенки для них "прозрачны".
+        /// </summary>
+        private static void SetupPhysicsLayers()
+        {
+            int glassware = LayerMask.NameToLayer("Glassware");
+            int probes = LayerMask.NameToLayer("Probes");
+            if (glassware >= 0 && probes >= 0)
+                Physics.IgnoreLayerCollision(glassware, probes, true);
         }
 
         void Start()
