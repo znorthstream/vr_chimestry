@@ -49,10 +49,22 @@ namespace ChemLab.Equipment
         [Header("Термометр")]
         public Transform bulb;
         public float probeRadius = 0.05f;
-        [Tooltip("Метка над термометром (создаётся автоматически при захвате)")]
+        [Tooltip("Метка над термометром (создаётся автоматически)")]
         public BillboardText label;
 
         private bool _wasReading;
+
+        void Start()
+        {
+            if (label == null)
+            {
+                var go = new GameObject("Label");
+                go.transform.SetParent(transform, false);
+                go.transform.localPosition = new Vector3(0f, 0.16f, 0f);
+                label = go.AddComponent<ChemLab.UI.BillboardText>();
+            }
+            label.gameObject.SetActive(true);
+        }
 
         void Update()
         {

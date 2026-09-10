@@ -33,11 +33,20 @@ namespace ChemLab.Equipment
             return best;
         }
 
-        /// <summary>Луч вниз по вертикали — найти сосуд-приёмник под точкой.</summary>
+        /// <summary>Луч вниз по вертикали — найти сосуд-приёмник под точкой.
+        /// Стенки других сосудов "прозрачны" для луча, сплошная мебель — нет.</summary>
         public static ContainerZone FindBelow(Vector3 origin, float maxDistance)
         {
-            if (Physics.Raycast(origin, Vector3.down, out var hit, maxDistance, ~0, QueryTriggerInteraction.Collide))
-                return hit.collider.GetComponentInParent<ContainerZone>();
+            var hits = Physics.RaycastAll(origin, Vector3.down, maxDistance, ~0, QueryTriggerInteraction.Collide);
+            System.Array.Sort(hits, (a, b) => a.distance.CompareTo(b.distance));
+            foreach (var hit in hits)
+            {
+                var zone = hit.collider.GetComponentInParent<ContainerZone>();
+                if (zone != null) return zone;
+                // Стенка чужого сосуда — смотрим глубже (можно лить по краю)
+                if (hit.collider.GetComponentInParent<ChemLab.Core.LabObject>() != null) continue;
+                return null; // стол / пол / раковина — приёмника нет
+            }
             return null;
         }
     }
